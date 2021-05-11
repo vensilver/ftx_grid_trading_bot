@@ -40,7 +40,9 @@ class Grid_trader:
 
     def place_order_init(self):
         # start cal level and place grid oreder
-        for i in range(self.grid_level + 1):  #  n+1 lines make n grid
+        last_price_grid_index = (self.last - self.lower_price) // self.interval_profit
+        grid_index_with_order = sorted(list(range(self.grid_level + 1)), key=lambda x: abs(x-last_price_grid_index))
+        for i in grid_index_with_order:  #  n+1 lines make n grid
             price = self.lower_price + i * self.interval_profit
             order = Order_Info()
             try:
@@ -50,11 +52,12 @@ class Grid_trader:
                 else:
                     order.id = self.client.place_order(market=self.symbol, side="sell", price=price, size=self.amount, post_only=True)['id']
                     log("place sell order id = " + str(order.id) + " in " + str(price))
+                self.order_list.append(order)
             except:
+                # Todo fixed this issue
                 log("update last price")
                 market_info = self.client.get_market(self.symbol)
                 self.last = market_info["last"]
-            self.order_list.append(order)
 
     def loop_job(self):
         fill_history = client.get_fills()
@@ -86,6 +89,9 @@ class Grid_trader:
                     msg + " order id : " + str(order.id) + " : " + str(new_order_price)
                 )
                 log(msg)
+                self.order_list.append(order.id)
+
+
 def log(msg):
     timestamp = datetime.datetime.now().strftime("%b %d %Y %H:%M:%S ")
     s = "[%s] %s:%s %s" % (timestamp, COLOR_WHITE, COLOR_RESET, msg)
@@ -123,6 +129,10 @@ main_job = Grid_trader(
 )
 main_job.place_order_init()
 while True:
-    print("Loop in :", datetime.datetime.now())
-    main_job.loop_job()
-    time.sleep(1)
+    try:
+        print(f"Loop in: {datetime.datetime.now()}, order list size {len(main_job.order_list)}")
+        main_job.loop_job()
+        time.sleep(1)
+    except:
+        time.sleep(1)
+
