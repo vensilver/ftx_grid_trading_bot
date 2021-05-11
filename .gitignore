@@ -2,3 +2,5 @@
 setting.json
 ftx.log
 output.log
+.idea/
+__pycache__/
