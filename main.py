@@ -90,6 +90,7 @@ class Grid_trader:
                 )
                 log(msg)
                 self.order_list.append(order.id)
+                self.order_list.remove(old_order_id)
 
 
 def log(msg):
